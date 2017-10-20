@@ -99,7 +99,7 @@ stock_change = stocks.apply(lambda x: np.log(x) - np.log(x.shift(1)))
 BoxStyle._style_list["angled"] = MyStyle
 
 fig = plt.figure(facecolor='#000606')
-plt.subplots_adjust(left=.14, bottom=.13, right=.97, top=.96, hspace=.22, wspace=.0)
+plt.subplots_adjust(left=.09, bottom=.13, right=.97, top=.96, hspace=.22, wspace=.0)
 
 g_stocks_return = plt.subplot2grid((8, 4), (0, 0),
                                    rowspan=4, colspan=4, facecolor='#000606')
@@ -127,6 +127,9 @@ for column in stocks_return:
 g_stocks_return.grid(linestyle='dotted')
 g_stocks_return.yaxis.label.set_color('#00decc')
 g_stocks_return.spines['left'].set_color('#037f7a')
+g_stocks_return.spines['right'].set_color('#000606')
+g_stocks_return.spines['top'].set_color('#000606')
+g_stocks_return.spines['bottom'].set_color('#000606')
 g_stocks_return.tick_params(axis='y', colors='#037f7a')
 g_stocks_return.set_ylabel("stock's return")
 
@@ -146,6 +149,9 @@ for column in stock_change:
 g_stock_change.grid(linestyle='dotted')
 g_stock_change.yaxis.label.set_color('#00decc')
 g_stock_change.spines['left'].set_color('#037f7a')
+g_stock_change.spines['right'].set_color('#000606')
+g_stock_change.spines['top'].set_color('#000606')
+g_stock_change.spines['bottom'].set_color('#000606')
 g_stock_change.tick_params(axis='y', colors='#037f7a')
 g_stock_change.tick_params(axis='x', colors='#037f7a')
 g_stock_change.set_ylabel('change per day')
