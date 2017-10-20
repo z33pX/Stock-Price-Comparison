@@ -68,21 +68,21 @@ if file.exists():
     stocks = pd.read_pickle(file_path)
 
 else:
-	print('download AAPL ...')
-	apple = web.DataReader('AAPL', 'yahoo', start, end)
+    print('download AAPL ...')
+    apple = web.DataReader('AAPL', 'yahoo', start, end)
 
-	print('download MSFT ...')
-	microsoft = web.DataReader('MSFT', 'yahoo', start, end)
+    print('download MSFT ...')
+    microsoft = web.DataReader('MSFT', 'yahoo', start, end)
 
-	print('download GOOG ...')
-	google = web.DataReader('GOOG', 'yahoo', start, end)
+    print('download GOOG ...')
+    google = web.DataReader('GOOG', 'yahoo', start, end)
 
-	stocks = pd.DataFrame({"AAPL": apple["Adj Close"], 
-		"MSFT": microsoft["Adj Close"], 
-		"GOOG": google["Adj Close"]})
-	
-	print('save data to file ...')
-	stocks.to_pickle(file_path)
+    stocks = pd.DataFrame({"AAPL": apple["Adj Close"],
+        "MSFT": microsoft["Adj Close"],
+        "GOOG": google["Adj Close"]})
+
+    print('save data to file ...')
+    stocks.to_pickle(file_path)
 
 print('draw ...')
 
@@ -101,24 +101,28 @@ BoxStyle._style_list["angled"] = MyStyle
 fig = plt.figure(facecolor='#000606')
 plt.subplots_adjust(left=.14, bottom=.13, right=.97, top=.96, hspace=.0, wspace=.06)
 
-g_stocks_return = plt.subplot2grid((8, 4), (0, 0), rowspan=4, colspan=4, facecolor='#000606')
-trans_offset = mtrans.offset_copy(g_stocks_return.transData, fig=fig, x=0.15, y=0.0, units='inches')
+g_stocks_return = plt.subplot2grid((8, 4), (0, 0),
+                                   rowspan=4, colspan=4, facecolor='#000606')
 
-g_stock_change = plt.subplot2grid((8, 4), (4, 0), sharex=g_stocks_return, rowspan=4, colspan=4, facecolor='#000606')
+trans_offset = mtrans.offset_copy(g_stocks_return.transData, fig=fig,
+                                  x=0.15, y=0.0, units='inches')
+
+g_stock_change = plt.subplot2grid((8, 4), (4, 0), sharex=g_stocks_return,
+                                  rowspan=4, colspan=4, facecolor='#000606')
 
 ## *** graph return ***
 i = 0
 for column in stocks_return:
-	g_stocks_return.plot(stocks_return.index, stocks_return[column], 
-		label=column, color=colors_set[i], linewidth=0.5)
+    g_stocks_return.plot(stocks_return.index, stocks_return[column],
+                         label=column, color=colors_set[i], linewidth=0.5)
 
 
-	value = stocks_return[column].tail(1)
-	g_stocks_return.text(value.index, value.values, truncate(value.values[0], 2), 
-		size=7, va="center", ha="center", transform=trans_offset,
-		bbox=dict(boxstyle="angled,pad=0.2", alpha=0.6, color=colors_set[i]))
+    value = stocks_return[column].tail(1)
+    g_stocks_return.text(value.index, value.values, truncate(value.values[0], 2),
+                         size=7, va="center", ha="center", transform=trans_offset,
+                         bbox=dict(boxstyle="angled,pad=0.2", alpha=0.6, color=colors_set[i]))
 
-	i += 1
+    i += 1
 
 g_stocks_return.grid(linestyle='dotted')
 g_stocks_return.yaxis.label.set_color('#00decc')
@@ -135,10 +139,10 @@ for line,text in zip(legend.get_lines(), legend.get_texts()):
 ## *** graph change ***
 i = 0
 for column in stock_change:
-	g_stock_change.plot(stock_change.index, stock_change[column], 
-		label=column, color=colors_set[i], linewidth=0.5)
+    g_stock_change.plot(stock_change.index, stock_change[column],
+                        label=column, color=colors_set[i], linewidth=0.5)
 
-	i += 1
+    i += 1
 
 g_stock_change.grid(linestyle='dotted')
 g_stock_change.yaxis.label.set_color('#00decc')
