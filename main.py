@@ -107,7 +107,6 @@ for column in stocks_return:
     g_stocks_return.plot(stocks_return.index, stocks_return[column],
                          label=column, color=colors_set[i], linewidth=0.5)
 
-
     value = stocks_return[column].tail(1)
     g_stocks_return.text(value.index, value.values, truncate(value.values[0], 2),
                          size=7, va="center", ha="center", transform=trans_offset,
