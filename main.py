@@ -130,6 +130,7 @@ for line,text in zip(legend.get_lines(), legend.get_texts()):
     text.set_color(line.get_color())
 
 ## *** graph change ***
+
 i = 0
 for column in stock_change:
     g_stock_change.plot(stock_change.index, stock_change[column],
