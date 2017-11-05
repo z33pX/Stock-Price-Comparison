@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import pandas_datareader.data as web
 import datetime
 import matplotlib.transforms as mtrans
-from pathlib import Path as pl
+from pandas_datareader._utils import RemoteDataError
 import numpy as np
 
 # Tutorial: https://ntguardian.wordpress.com/2016/09/19/introduction-stock-market-data-python-1/
 
-colors_set = ['#00decc', '#ffba00', '#f600ff']
+colors_set = ['#00decc', '#ffba00', '#f600ff', '#00de1d', '#b7de00', '#de5700', '#b700de', '#4700de', '#0081de', '#de0000']
 
 
 def truncate(f, n):
@@ -55,34 +55,25 @@ class MyStyle(BoxStyle._Base):
         return path
 
 
-start = '20150101'
-end = datetime.date.today()
-file_path = 'prices_combined.ple'
+start = '20170101'
+symbols = ['^GSPC', 'TSLA', 'MSFT', 'AAPL', 'GOOG', 'ORCL', 'AMZN', 'NFLX', 'FB2A', 'XOM',]
+reload = True
 
 ## 1) *** download data ***
 
-file = pl(file_path)
+if reload:
+    d = {}
+    for s in symbols:
+        print('downloading ' + s + ' ...')
+        try:
+            d[s] = web.DataReader(s, 'yahoo', start, datetime.date.today())['Adj Close']
+        except RemoteDataError as rde:
+            pass
 
-if file.exists():
-    print('load data from file ...')
-    stocks = pd.read_pickle(file_path)
-
+    stocks = pd.DataFrame(d)
+    pd.to_pickle(stocks, 'data.pcl')
 else:
-    print('download AAPL ...')
-    apple = web.DataReader('AAPL', 'yahoo', start, end)
-
-    print('download MSFT ...')
-    microsoft = web.DataReader('MSFT', 'yahoo', start, end)
-
-    print('download GOOG ...')
-    google = web.DataReader('GOOG', 'yahoo', start, end)
-
-    stocks = pd.DataFrame({"AAPL": apple["Adj Close"],
-        "MSFT": microsoft["Adj Close"],
-        "GOOG": google["Adj Close"]})
-
-    print('save data to file ...')
-    stocks.to_pickle(file_path)
+    stocks = pd.read_pickle('data.pcl')
 
 print('draw ...')
 
@@ -98,17 +89,17 @@ stock_change = stocks.apply(lambda x: np.log(x) - np.log(x.shift(1)))
 
 BoxStyle._style_list["angled"] = MyStyle
 
-fig = plt.figure(facecolor='#000606')
+fig = plt.figure(facecolor='#070d00')
 plt.subplots_adjust(left=.09, bottom=.13, right=.97, top=.96, hspace=.22, wspace=.0)
 
 g_stocks_return = plt.subplot2grid((8, 4), (0, 0),
-                                   rowspan=4, colspan=4, facecolor='#000606')
+                                   rowspan=4, colspan=4, facecolor='#070d00')
 
 trans_offset = mtrans.offset_copy(g_stocks_return.transData, fig=fig,
                                   x=0.15, y=0.0, units='inches')
 
 g_stock_change = plt.subplot2grid((8, 4), (4, 0), sharex=g_stocks_return,
-                                  rowspan=4, colspan=4, facecolor='#000606')
+                                  rowspan=4, colspan=4, facecolor='#070d00')
 
 ## *** graph return ***
 i = 0
@@ -125,16 +116,17 @@ for column in stocks_return:
     i += 1
 
 g_stocks_return.grid(linestyle='dotted')
-g_stocks_return.yaxis.label.set_color('#00decc')
-g_stocks_return.spines['left'].set_color('#037f7a')
-g_stocks_return.spines['right'].set_color('#000606')
-g_stocks_return.spines['top'].set_color('#000606')
-g_stocks_return.spines['bottom'].set_color('#000606')
-g_stocks_return.tick_params(axis='y', colors='#037f7a')
+g_stocks_return.yaxis.label.set_color('#c9c9c9')
+g_stocks_return.spines['left'].set_color('#c9c9c9')
+g_stocks_return.spines['right'].set_color('#070d00')
+g_stocks_return.spines['top'].set_color('#070d00')
+g_stocks_return.spines['bottom'].set_color('#070d00')
+g_stocks_return.tick_params(axis='y', colors='#c9c9c9')
+g_stocks_return.tick_params(axis='x', colors='#070d00')
 g_stocks_return.set_ylabel("stock's return")
 
 legend = g_stocks_return.legend(loc='best', fancybox=True, framealpha=0.5)
-legend.get_frame().set_facecolor('#000606')
+legend.get_frame().set_facecolor('#070d00')
 for line,text in zip(legend.get_lines(), legend.get_texts()):
     text.set_color(line.get_color())
 
@@ -147,13 +139,13 @@ for column in stock_change:
     i += 1
 
 g_stock_change.grid(linestyle='dotted')
-g_stock_change.yaxis.label.set_color('#00decc')
-g_stock_change.spines['left'].set_color('#037f7a')
-g_stock_change.spines['right'].set_color('#000606')
-g_stock_change.spines['top'].set_color('#000606')
-g_stock_change.spines['bottom'].set_color('#000606')
-g_stock_change.tick_params(axis='y', colors='#037f7a')
-g_stock_change.tick_params(axis='x', colors='#037f7a')
+g_stock_change.yaxis.label.set_color('#c9c9c9')
+g_stock_change.spines['left'].set_color('#c9c9c9')
+g_stock_change.spines['right'].set_color('#070d00')
+g_stock_change.spines['top'].set_color('#070d00')
+g_stock_change.spines['bottom'].set_color('#070d00')
+g_stock_change.tick_params(axis='y', colors='#c9c9c9')
+g_stock_change.tick_params(axis='x', colors='#c9c9c9')
 g_stock_change.set_ylabel('change per day')
 
 labels = g_stock_change.get_xticklabels()
