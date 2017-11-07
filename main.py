@@ -64,7 +64,7 @@ reload = True
 
 # Colors:
 label_colors = '#1b1b1b'  # '#c9c9c9'
-background_color = '#f8ffef'  # '#070d00'
+background_color = '#ffffff'  # '#070d00'
 
 # 1) *** download data ***
 
