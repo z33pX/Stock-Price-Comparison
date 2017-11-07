@@ -10,9 +10,6 @@ import numpy as np
 
 # Tutorial: https://ntguardian.wordpress.com/2016/09/19/introduction-stock-market-data-python-1/
 
-colors_set = ['#00decc', '#ffba00', '#f600ff', '#00de1d', '#b7de00', '#de5700', '#b700de', '#4700de', '#0081de', '#de0000']
-
-
 def truncate(f, n):
     s = '{}'.format(f)
     if 'e' in s or 'E' in s:
@@ -54,101 +51,112 @@ class MyStyle(BoxStyle._Base):
 
         return path
 
+# colors_set = ['#00decc', '#ffba00', '#f600ff', '#00de1d', '#b7de00',
+#               '#de5700', '#b700de', '#4700de', '#0081de', '#de0000']
+
+colors_set = ['#de5700', '#00de1d', '#f600ff', '#00decc', '#ffba00',
+              '#b7de00', '#b700de', '#4700de', '#0081de', '#de0000']
 
 start = '20170101'
-symbols = ['^GSPC', 'TSLA', 'MSFT', 'AAPL', 'GOOG', 'ORCL', 'AMZN', 'NFLX', 'FB2A', 'XOM',]
+symbols = ['TSLA', 'MSFT', 'AAPL', 'GOOG', 'AMZN', 'NFLX']
+# symbols = ['^GSPC', 'NFLX']
 reload = True
 
-## 1) *** download data ***
+# Colors:
+label_colors = '#1b1b1b'  # '#c9c9c9'
+background_color = '#f8ffef'  # '#070d00'
+
+# 1) *** download data ***
 
 if reload:
-    d = {}
-    for s in symbols:
-        print('downloading ' + s + ' ...')
+    d = []
+    _symbols = symbols[:]
+    for s in _symbols:
         try:
-            d[s] = web.DataReader(s, 'yahoo', start, datetime.date.today())['Adj Close']
+            print('downloading ' + s + ' ...')
+
+            data = web.DataReader(s, 'yahoo', start, datetime.date.today())
+
+            # calculate return
+            x = pd.DataFrame(data['Adj Close']).apply(lambda x: (x / x[0]) - 1)
+            x.rename(columns={'Adj Close': s}, inplace=True)
+            d.append(x)
+
+            # Volume
+            x = pd.DataFrame(data['Volume'])
+            x.rename(columns={'Volume': s + '_volume'}, inplace=True)
+            d.append(x)
+
+            # calculate change per day
+            x = pd.DataFrame(data['Adj Close']).apply(lambda x: np.log(x) - np.log(x.shift(1)))
+            x.rename(columns={'Adj Close': s + '_change'}, inplace=True)
+            d.append(x)
+
         except RemoteDataError as rde:
-            pass
+            print('error downloading ' + s + ': ' + str(rde))
+            symbols.remove(s)
 
-    stocks = pd.DataFrame(d)
+    if len(d) > 1:
+        stocks = pd.concat(d, axis=1)
+    else:
+        stocks = d
+
     pd.to_pickle(stocks, 'data.pcl')
-else:
-    stocks = pd.read_pickle('data.pcl')
 
+else:
+    stocks = pd.read_pickle('data.pcl')[symbols]
+
+# 2) *** draw data ***
 print('draw ...')
 
-## 2) *** calculate data ***
+fig = plt.figure(facecolor=background_color)
+plt.subplots_adjust(left=.15, bottom=.08, right=.97, top=.96, hspace=.30, wspace=.0)
 
-# calculate return
-stocks_return = stocks.apply(lambda x: (x / x[0]) - 1)
+graph = []
 
-# calculate change per day
-stock_change = stocks.apply(lambda x: np.log(x) - np.log(x.shift(1))) 
-
-## 3) *** draw data ***
+graph.append(plt.subplot2grid((12, 4), (0, 0), rowspan=4, colspan=4, facecolor=background_color))
+graph.append(plt.subplot2grid((12, 4), (4, 0), sharex=graph[0], rowspan=4, colspan=4, facecolor=background_color))
+graph.append(plt.subplot2grid((12, 4), (8, 0), sharex=graph[0], rowspan=4, colspan=4, facecolor=background_color))
 
 BoxStyle._style_list["angled"] = MyStyle
+trans_offset = mtrans.offset_copy(graph[0].transData, fig=fig, x=0.15, y=0.0, units='inches')
 
-fig = plt.figure(facecolor='#070d00')
-plt.subplots_adjust(left=.09, bottom=.13, right=.97, top=.96, hspace=.22, wspace=.0)
-
-g_stocks_return = plt.subplot2grid((8, 4), (0, 0),
-                                   rowspan=4, colspan=4, facecolor='#070d00')
-
-trans_offset = mtrans.offset_copy(g_stocks_return.transData, fig=fig,
-                                  x=0.15, y=0.0, units='inches')
-
-g_stock_change = plt.subplot2grid((8, 4), (4, 0), sharex=g_stocks_return,
-                                  rowspan=4, colspan=4, facecolor='#070d00')
-
-## *** graph return ***
 i = 0
-for column in stocks_return:
-    g_stocks_return.plot(stocks_return.index, stocks_return[column],
-                         label=column, color=colors_set[i], linewidth=0.5)
+for s in symbols:
+    graph[0].plot(stocks.index, stocks[s], label=s, color=colors_set[i], linewidth=0.5)
 
-    value = stocks_return[column].tail(1)
-    g_stocks_return.text(value.index, value.values, truncate(value.values[0], 2),
-                         size=7, va="center", ha="center", transform=trans_offset,
-                         bbox=dict(boxstyle="angled,pad=0.2", alpha=0.6, color=colors_set[i]))
+    value = stocks[s].tail(1)
+    graph[0].text(value.index, value.values, truncate(value.values[0], 2),
+                  size=7, va="center", ha="center", transform=trans_offset,
+                  bbox=dict(boxstyle="angled,pad=0.2", alpha=0.6, color=colors_set[i]))
+
+    graph[1].plot(stocks.index, stocks[s + '_volume'], label=s + '_volume', color=colors_set[i], linewidth=0.5)
+
+    graph[2].plot(stocks.index, stocks[s + '_change'], label=s + '_change', color=colors_set[i], linewidth=0.5)
 
     i += 1
 
-g_stocks_return.grid(linestyle='dotted')
-g_stocks_return.yaxis.label.set_color('#c9c9c9')
-g_stocks_return.spines['left'].set_color('#c9c9c9')
-g_stocks_return.spines['right'].set_color('#070d00')
-g_stocks_return.spines['top'].set_color('#070d00')
-g_stocks_return.spines['bottom'].set_color('#070d00')
-g_stocks_return.tick_params(axis='y', colors='#c9c9c9')
-g_stocks_return.tick_params(axis='x', colors='#070d00')
-g_stocks_return.set_ylabel("stock's return")
+for g in graph:
+    g.grid(linestyle='dotted')
+    g.yaxis.label.set_color(label_colors)
+    g.spines['left'].set_color(label_colors)
+    g.spines['right'].set_color(background_color)
+    g.spines['top'].set_color(background_color)
+    g.spines['bottom'].set_color(background_color)
+    g.tick_params(axis='y', colors=label_colors)
+    g.tick_params(axis='x', colors=background_color)
 
-legend = g_stocks_return.legend(loc='best', fancybox=True, framealpha=0.5)
-legend.get_frame().set_facecolor('#070d00')
+graph[0].set_ylabel("stock's return")
+legend = graph[0].legend(loc='best', fancybox=True, framealpha=0.5)
+legend.get_frame().set_facecolor(background_color)
 for line,text in zip(legend.get_lines(), legend.get_texts()):
     text.set_color(line.get_color())
 
-## *** graph change ***
+graph[1].set_ylabel('volume')
 
-i = 0
-for column in stock_change:
-    g_stock_change.plot(stock_change.index, stock_change[column],
-                        label=column, color=colors_set[i], linewidth=0.5)
-
-    i += 1
-
-g_stock_change.grid(linestyle='dotted')
-g_stock_change.yaxis.label.set_color('#c9c9c9')
-g_stock_change.spines['left'].set_color('#c9c9c9')
-g_stock_change.spines['right'].set_color('#070d00')
-g_stock_change.spines['top'].set_color('#070d00')
-g_stock_change.spines['bottom'].set_color('#070d00')
-g_stock_change.tick_params(axis='y', colors='#c9c9c9')
-g_stock_change.tick_params(axis='x', colors='#c9c9c9')
-g_stock_change.set_ylabel('change per day')
-
-labels = g_stock_change.get_xticklabels()
+graph[2].set_ylabel('change per day')
+graph[2].tick_params(axis='x', colors=label_colors)
+labels = graph[2].get_xticklabels()
 plt.setp(labels, rotation=30, fontsize=10)
 
 plt.show()
