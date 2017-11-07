@@ -1,4 +1,4 @@
-# Stock-Comparison
+# Stock-Price-Comparison
 
 Comparison of stock prices by return, volume and change per day.
 
