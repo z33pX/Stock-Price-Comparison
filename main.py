@@ -58,28 +58,30 @@ colors_set = ['#de5700', '#00de1d', '#f600ff', '#00decc', '#ffba00',
               '#b7de00', '#b700de', '#4700de', '#0081de', '#de0000']
 
 start = '20170101'
-symbols = ['TSLA', 'MSFT', 'AAPL', 'GOOG', 'AMZN', 'NFLX']
+symbols = ['TSLA', 'MSFT', 'NFLX', 'AMZN']
 # symbols = ['^GSPC', 'NFLX']
 reload = True
 
 # Colors:
 label_colors = '#1b1b1b'  # '#c9c9c9'
-background_color = '#ffffff'  # '#070d00'
+background_color = '#f8ffef'  # '#070d00'
 
 # 1) *** download data ***
 
 if reload:
-    d = []
-    _symbols = symbols[:]
+    _symbols = symbols
+    stocks = pd.DataFrame()
     for s in _symbols:
+        d = []
+        temp_df = None
         try:
             print('downloading ' + s + ' ...')
 
-            data = web.DataReader(s, 'yahoo', start, datetime.date.today())
+            data = web.DataReader(s, 'morningstar', start, datetime.date.today())
 
             # calculate return
-            x = pd.DataFrame(data['Adj Close']).apply(lambda x: (x / x[0]) - 1)
-            x.rename(columns={'Adj Close': s}, inplace=True)
+            x = pd.DataFrame(data['Close']).apply(lambda x: (x / x[0]) - 1)
+            x.rename(columns={'Close': s}, inplace=True)
             d.append(x)
 
             # Volume
@@ -88,26 +90,23 @@ if reload:
             d.append(x)
 
             # calculate change per day
-            x = pd.DataFrame(data['Adj Close']).apply(lambda x: np.log(x) - np.log(x.shift(1)))
-            x.rename(columns={'Adj Close': s + '_change'}, inplace=True)
+            x = pd.DataFrame(data['Close']).apply(lambda x: np.log(x) - np.log(x.shift(1)))
+            x.rename(columns={'Close': s + '_change'}, inplace=True)
             d.append(x)
 
         except RemoteDataError as rde:
             print('error downloading ' + s + ': ' + str(rde))
             symbols.remove(s)
-
-    if len(d) > 1:
-        stocks = pd.concat(d, axis=1)
-    else:
-        stocks = d
+        temp_df = pd.concat(d, axis=1).reset_index()
+        stocks = stocks.append(temp_df)
 
     pd.to_pickle(stocks, 'data.pcl')
 
 else:
     stocks = pd.read_pickle('data.pcl')[symbols]
 
-# 2) *** draw data ***
-print('draw ...')
+# 2) *** plot data ***
+print('plot ...')
 
 fig = plt.figure(facecolor=background_color)
 plt.subplots_adjust(left=.15, bottom=.08, right=.97, top=.96, hspace=.30, wspace=.0)
@@ -123,16 +122,19 @@ trans_offset = mtrans.offset_copy(graph[0].transData, fig=fig, x=0.15, y=0.0, un
 
 i = 0
 for s in symbols:
+
     graph[0].plot(stocks.index, stocks[s], label=s, color=colors_set[i], linewidth=0.5)
 
+    """
     value = stocks[s].tail(1)
-    graph[0].text(value.index, value.values, truncate(value.values[0], 2),
+    graph[0].text(value.index, str(value.values), str(truncate(value.values[0], 2)),
                   size=7, va="center", ha="center", transform=trans_offset,
                   bbox=dict(boxstyle="angled,pad=0.2", alpha=0.6, color=colors_set[i]))
+    """
 
-    graph[1].plot(stocks.index, stocks[s + '_volume'], label=s + '_volume', color=colors_set[i], linewidth=0.5)
+    graph[1].plot(stocks.index, stocks[s + '_volume'], label=s + ' volume', color=colors_set[i], linewidth=0.5)
 
-    graph[2].plot(stocks.index, stocks[s + '_change'], label=s + '_change', color=colors_set[i], linewidth=0.5)
+    graph[2].plot(stocks.index, stocks[s + '_change'], label=s + ' change', color=colors_set[i], linewidth=0.5)
 
     i += 1
 
