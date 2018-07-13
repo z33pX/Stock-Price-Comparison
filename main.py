@@ -58,7 +58,7 @@ colors_set = ['#de5700', '#00de1d', '#f600ff', '#00decc', '#ffba00',
               '#b7de00', '#b700de', '#4700de', '#0081de', '#de0000']
 
 start = '20170101'
-symbols = ['TSLA', 'MSFT', 'NFLX', 'AMZN']
+symbols = ['TSLA', 'MSFT', 'NFLX', 'AMZN', 'GOOG', 'AAPL']
 # symbols = ['^GSPC', 'NFLX']
 reload = True
 
